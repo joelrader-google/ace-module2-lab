@@ -60,7 +60,10 @@ export function getUserProfile () {
     const theme = themes[themeKey] || themes['bluegrey-lightgreen']
 
     if (username) {
-      template = template.replace(/_username_/g, username)
+      const sanitizedUsername = username
+        .replace(/#/g, '\\#')
+        .replace(/!/g, '\\!')
+      template = template.replace(/_username_/g, sanitizedUsername)
     }
     template = template.replace(/_emailHash_/g, security.hash(user?.email))
     template = template.replace(/_title_/g, entities.encode(config.get<string>('application.name')))
