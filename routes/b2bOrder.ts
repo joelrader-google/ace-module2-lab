@@ -87,6 +87,13 @@ export function b2bOrder () {
           return
         }
 
+        const whitelistRegex = /^[a-zA-Z0-9\s(){};<>=!+\-*/&|,_]*$/
+        if (!whitelistRegex.test(orderLinesData)) {
+          res.status(400)
+          next(new Error('Invalid order lines data.'))
+          return
+        }
+
         const sandbox = { safeEval, orderLinesData }
         vm.createContext(sandbox)
         vm.runInContext('safeEval(orderLinesData)', sandbox, { timeout: 2000 })
