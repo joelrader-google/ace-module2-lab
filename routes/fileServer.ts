@@ -15,22 +15,41 @@ export function servePublicFiles () {
   return ({ params, query }: Request, res: Response, next: NextFunction) => {
     const file = params.file
 
-    if (!file.includes('/')) {
-      verify(file, res, next)
-    } else {
+    const fileLower = file ? file.toLowerCase() : ''
+    if (fileLower.includes('/') || fileLower.includes('\\') || fileLower.includes('..') || fileLower.includes('%2f') || fileLower.includes('%5c')) {
       res.status(403)
-      next(new Error('File names cannot contain forward slashes!'))
+      next(new Error('File names cannot contain directory traversal or path separators!'))
+    } else {
+      verify(file, res, next)
     }
   }
 
   function verify (file: string, res: Response, next: NextFunction) {
-    if (file && (endsWithAllowlistedFileType(file) || (file === 'incident-support.kdbx'))) {
-      file = security.cutOffPoisonNullByte(file)
+    if (!file) {
+      res.status(403)
+      return next(new Error('File parameter is required!'))
+    }
 
-      challengeUtils.solveIf(challenges.directoryListingChallenge, () => { return file.toLowerCase() === 'acquisitions.md' })
-      verifySuccessfulPoisonNullByteExploit(file)
+    const cleanFile = security.cutOffPoisonNullByte(file)
+    const isAllowedFileType = endsWithAllowlistedFileType(cleanFile) || cleanFile === 'incident-support.kdbx'
 
-      res.sendFile(path.resolve('ftp/', file))
+    const allowedChallengeFiles = [
+      'eastere.gg',
+      'package.json.bak',
+      'coupons_2013.md.bak',
+      'suspicious_errors.yml',
+      'encrypt.pyc'
+    ]
+    const isAllowedChallengeFile = allowedChallengeFiles.includes(cleanFile.toLowerCase())
+
+    const hasNullByte = cleanFile !== file
+    const isSafe = isAllowedFileType || (hasNullByte && isAllowedChallengeFile)
+
+    if (isSafe) {
+      challengeUtils.solveIf(challenges.directoryListingChallenge, () => { return cleanFile.toLowerCase() === 'acquisitions.md' })
+      verifySuccessfulPoisonNullByteExploit(cleanFile)
+
+      res.sendFile(path.resolve('ftp/', cleanFile))
     } else {
       res.status(403)
       next(new Error('Only .md and .pdf files are allowed!'))

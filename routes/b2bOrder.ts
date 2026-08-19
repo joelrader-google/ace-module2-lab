@@ -23,6 +23,13 @@ export function b2bOrder () {
           /'/,                  // block single quotes
           /"/,                  // block double quotes
           /`/,                  // block backticks
+          /\./,                 // block dots (property access)
+          /\[/,                 // block open brackets (computed property access)
+          /\]/,                 // block close brackets
+          /\$/,                 // block dollar sign
+          /#/,                  // block hash symbol
+          /\?/,                 // block question mark
+          /:/,                  // block colons
           /\bthis\b/i,          // block 'this' keyword
           /constructor/i,       // block constructor
           /prototype/i,         // block prototype
@@ -56,7 +63,22 @@ export function b2bOrder () {
           /Date/i,              // block Date
           /\bMap\b/i,           // block Map
           /\bSet\b/i,           // block Set
-          /Symbol/i             // block Symbol
+          /Symbol/i,            // block Symbol
+          /\bconsole\b/i,       // block console
+          /\bWebAssembly\b/i,   // block WebAssembly
+          /\bmodule\b/i,        // block module
+          /\bexports\b/i,       // block exports
+          /\bperformance\b/i,   // block performance
+          /\bsetTimeout\b/i,    // block setTimeout
+          /\bsetInterval\b/i,   // block setInterval
+          /\bsetImmediate\b/i,  // block setImmediate
+          /\bclearTimeout\b/i,  // block clearTimeout
+          /\bclearInterval\b/i, // block clearInterval
+          /\bclearImmediate\b/i, // block clearImmediate
+          /\bfetch\b/i,         // block fetch
+          /\bIntl\b/i,          // block Intl
+          /\bPromise\b/i,       // block Promise
+          /define/i             // block defineProperty, __defineGetter__, etc.
         ]
 
         if (blacklist.some((regex) => regex.test(orderLinesData))) {
