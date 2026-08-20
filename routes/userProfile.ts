@@ -54,17 +54,24 @@ export function getUserProfile () {
     if (username?.match(/#{(.*)}/) !== null && utils.isChallengeEnabled(challenges.usernameXssChallenge)) {
       req.app.locals.abused_ssti_bug = true
     }
-    username = '\\' + username
 
     const themeKey = config.get<string>('application.theme') as keyof typeof themes
     const theme = themes[themeKey] || themes['bluegrey-lightgreen']
 
     if (username) {
-      const sanitizedUsername = username
-        .replace(/#/g, '\\#')
-        .replace(/!/g, '\\!')
+      // 1. Remove/replace newlines and carriage returns to prevent structure injection
+      let safeUsername = username.replace(/[\r\n]/g, ' ')
+      // 2. Escape all existing backslashes in the user input so they don't interfere with escaping
+      safeUsername = safeUsername.replace(/\\/g, '\\\\')
+      // 3. Escape all '#' and '!' to prevent template interpolation
+      safeUsername = safeUsername.replace(/#/g, '\\#')
+                                 .replace(/!/g, '\\!')
+      // 4. Prepend the backslash to prevent Pug from parsing the username as a tag/element
+      const sanitizedUsername = '\\' + safeUsername
       template = template.replace(/_username_/g, sanitizedUsername)
     }
+    username = '\\' + username
+
     template = template.replace(/_emailHash_/g, security.hash(user?.email))
     template = template.replace(/_title_/g, entities.encode(config.get<string>('application.name')))
     template = template.replace(/_favicon_/g, favicon())
