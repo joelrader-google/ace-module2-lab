@@ -5,17 +5,38 @@
 
 import { type Request, type Response } from 'express'
 import { AddressModel } from '../models/address'
+import * as security from '../lib/insecurity'
 
 export function getAddress () {
   return async (req: Request, res: Response) => {
-    const addresses = await AddressModel.findAll({ where: { UserId: req.body.UserId } })
+    const user = security.authenticatedUsers.from(req)
+    const userId = user?.data ? user.data.id : undefined
+    if (userId === undefined) {
+      res.status(401).json({ status: 'error', message: 'Unauthorized' })
+      return
+    }
+    if (req.body.UserId && req.body.UserId != userId) { // eslint-disable-line eqeqeq
+      res.status(401).json({ status: 'error', message: 'Unauthorized' })
+      return
+    }
+    const addresses = await AddressModel.findAll({ where: { UserId: userId } })
     res.status(200).json({ status: 'success', data: addresses })
   }
 }
 
 export function getAddressById () {
   return async (req: Request, res: Response) => {
-    const address = await AddressModel.findOne({ where: { id: req.params.id, UserId: req.body.UserId } })
+    const user = security.authenticatedUsers.from(req)
+    const userId = user?.data ? user.data.id : undefined
+    if (userId === undefined) {
+      res.status(401).json({ status: 'error', message: 'Unauthorized' })
+      return
+    }
+    if (req.body.UserId && req.body.UserId != userId) { // eslint-disable-line eqeqeq
+      res.status(401).json({ status: 'error', message: 'Unauthorized' })
+      return
+    }
+    const address = await AddressModel.findOne({ where: { id: req.params.id, UserId: userId } })
     if (address != null) {
       res.status(200).json({ status: 'success', data: address })
     } else {
@@ -26,7 +47,17 @@ export function getAddressById () {
 
 export function delAddressById () {
   return async (req: Request, res: Response) => {
-    const address = await AddressModel.destroy({ where: { id: req.params.id, UserId: req.body.UserId } })
+    const user = security.authenticatedUsers.from(req)
+    const userId = user?.data ? user.data.id : undefined
+    if (userId === undefined) {
+      res.status(401).json({ status: 'error', message: 'Unauthorized' })
+      return
+    }
+    if (req.body.UserId && req.body.UserId != userId) { // eslint-disable-line eqeqeq
+      res.status(401).json({ status: 'error', message: 'Unauthorized' })
+      return
+    }
+    const address = await AddressModel.destroy({ where: { id: req.params.id, UserId: userId } })
     if (address) {
       res.status(200).json({ status: 'success', data: 'Address deleted successfully.' })
     } else {
